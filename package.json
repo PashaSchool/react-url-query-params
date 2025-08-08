@@ -38,12 +38,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/<your-username>/react-url-query-params.git"
+    "url": "https://github.com/PashaSchool/react-url-query-params"
   },
   "bugs": {
-    "url": "https://github.com/<your-username>/react-url-query-params/issues"
+    "url": "https://github.com/PashaSchool/react-url-query-params/issues"
   },
-  "homepage": "https://github.com/<your-username>/react-url-query-params#readme",
+  "homepage": "https://github.com/PashaSchool/react-url-query-params#readme",
   "keywords": [
     "react",
     "hooks",
