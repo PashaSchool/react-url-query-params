@@ -23,11 +23,11 @@ Built for [`react-router-dom`](https://reactrouter.com/) (v6+) with **type-safe 
 ## 📦 Installation
 
 ```bash
-npm install use-url-params
+npm react-use-url-params
 ```
 or
 ```bash
-yarn add use-url-params
+yarn add react-use-url-params
 ```
 ## 🚀 Usage
 
