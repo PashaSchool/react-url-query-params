@@ -1,6 +1,6 @@
 {
   "name": "react-url-query-params",
-  "version": "0.1.1",
+  "version": "0.1.2-beta.0",
   "description": "React hooks for managing and updating URL query parameters with batch updates and type safety.",
   "author": "Pavlo Kuzina",
   "license": "MIT",
