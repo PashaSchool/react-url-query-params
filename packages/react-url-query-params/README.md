@@ -1,27 +1,31 @@
-# useUrlParams
+# react-url-query-params
 
 [![npm version](https://img.shields.io/npm/v/react-url-query-params?color=blue)](https://www.npmjs.com/package/react-url-query-params)
 [![npm downloads](https://img.shields.io/npm/dw/react-url-query-params)](https://www.npmjs.com/package/react-url-query-params)
+[![Next.js](https://img.shields.io/badge/Next.js-supported-black?logo=next.js)](https://nextjs.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](../../LICENSE)
 [![CI](https://github.com/PashaSchool/utils-kit/actions/workflows/CI.yml/badge.svg)](https://github.com/PashaSchool/utils-kit/actions/workflows/CI.yml)
 
-
 A lightweight React hook library for managing **URL query parameters** with full TypeScript support and auto-generated helper methods.
 
-Works with **`react-router-dom`** (v6+), **Next.js App Router**, and **Next.js Pages Router** — with **type-safe keys**, **option validation**, and **handy helper flags**.
+Works with **`react-router-dom`**, **Next.js App Router**, and **Next.js Pages Router** — same API, just swap the import path.
 
-The library provides two hooks:
-- **`useUrlParams`** - Manage a single query parameter
-- **`useBulkUrlParams`** - Manage multiple query parameters at once
+## Router Support
+
+| Import path | Router | When to use |
+|---|---|---|
+| `react-url-query-params` | `react-router-dom` v6+ | CRA, Vite, Remix |
+| `react-url-query-params/next` | Next.js App Router (`next/navigation`) | Next.js 13+ with `app/` directory |
+| `react-url-query-params/next-pages` | Next.js Pages Router (`next/router`) | Next.js with `pages/` directory |
 
 ---
 
 ## Features
 
+- **Next.js ready** — App Router and Pages Router both supported out of the box
 - **Type-safe** query parameter keys and values
 - **Auto-generated helpers**: `set<Key>`, `toggle<Key>`, `is<Key><Option>`, `clear<Key>`
 - **Toggle mode** for 2-option parameters
-- Works with `react-router-dom`, Next.js App Router, and Next.js Pages Router
 - Zero dependencies (except React & your router)
 
 ---
@@ -35,18 +39,6 @@ or
 ```bash
 yarn add react-url-query-params
 ```
-
----
-
-## Router Support
-
-| Import path | Router | When to use |
-|---|---|---|
-| `react-url-query-params` | `react-router-dom` v6+ | CRA, Vite, Remix |
-| `react-url-query-params/next` | Next.js App Router (`next/navigation`) | Next.js 13+ with `app/` directory |
-| `react-url-query-params/next-pages` | Next.js Pages Router (`next/router`) | Next.js with `pages/` directory |
-
-All three exports provide the same `useUrlParams` and `useBatchUrlParams` API.
 
 ---
 
