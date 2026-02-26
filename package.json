@@ -7,10 +7,7 @@
     "typescript": "^5.9.3"
   },
   "lint-staged": {
-    "*.{ts,tsx}": [
-      "check:write",
-      "prebuild"
-    ]
+    "*.{ts,tsx}": "npx @biomejs/biome check --write"
   },
   "name": "utils-kit",
   "private": true,

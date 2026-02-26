@@ -1,7 +1,9 @@
+"use client";
+
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
-import type { Capitalize, ParamsConfig } from "./types.utils";
-import { upperFirst } from "./utils";
+import type { Capitalize, ParamsConfig } from "../types.utils";
+import { upperFirst } from "../utils";
 
 type BatchUrlReturnType<T extends Record<string, readonly string[]>> = {
   set: (values: Partial<{ [K in keyof T]: T[K][number] }>, config?: ParamsConfig) => void;
@@ -15,36 +17,44 @@ type BatchUrlReturnType<T extends Record<string, readonly string[]>> = {
 };
 
 function useBulkUrlParams<const T extends Record<string, readonly string[]>>(config: T): BatchUrlReturnType<T> {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
 
-  type Config = {
-    [K in keyof T]: T[K][number];
-  };
+  type Config = { [K in keyof T]: T[K][number] };
+
+  const navigate = useCallback(
+    (params: URLSearchParams, paramsConfig: ParamsConfig = { replace: false }) => {
+      const url = params.size > 0 ? `${pathname}?${params.toString()}` : pathname;
+      if (paramsConfig.replace) {
+        router.replace(url);
+      } else {
+        router.push(url);
+      }
+    },
+    [pathname, router],
+  );
 
   const setterFunction = useCallback(
     (values: Partial<Config>, paramsConfig: ParamsConfig = { replace: false }) => {
-      const params = new URLSearchParams(searchParams);
-
+      const params = new URLSearchParams(searchParams.toString());
       Object.entries(values).forEach(([key, value]) => {
-        params.set(key, value);
+        params.set(key, value as string);
       });
-
-      setSearchParams(params.toString(), paramsConfig);
+      navigate(params, paramsConfig);
     },
-    [searchParams, setSearchParams],
+    [searchParams, navigate],
   );
 
   const capitalizedOptions = useMemo(() => {
-    const params = new URLSearchParams(searchParams);
     const result = {} as { [key: string]: boolean };
 
     Object.entries(config).forEach(([key, options]) => {
       const capitalizedKeyName = upperFirst(key);
-      const currentValue = params.get(key);
+      const currentValue = searchParams.get(key);
 
-      options.forEach((option) => {
+      (options as string[]).forEach((option) => {
         const capitalizedOption = upperFirst(option);
-
         Object.assign(result, {
           [`is${capitalizedKeyName}${capitalizedOption}`]: currentValue === option,
         });
@@ -57,16 +67,14 @@ function useBulkUrlParams<const T extends Record<string, readonly string[]>>(con
   const clearParams = useCallback(
     (paramsConfig: ParamsConfig = { replace: false }) => {
       const params = new URLSearchParams(searchParams.toString());
-
-      Object.entries(config).forEach(([key, _options]) => {
+      Object.keys(config).forEach((key) => {
         if (params.has(key)) {
           params.delete(key);
         }
       });
-
-      setSearchParams([...params], paramsConfig);
+      navigate(params, paramsConfig);
     },
-    [searchParams, config.keyName, setSearchParams, config],
+    [searchParams, config, navigate],
   );
 
   return {

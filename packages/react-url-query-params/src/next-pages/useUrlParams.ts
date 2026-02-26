@@ -1,7 +1,7 @@
+import { useRouter } from "next/router";
 import { useCallback, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
-import type { Capitalize, ParamsConfig, QueryParamConfig } from "./types.utils";
-import { upperFirst } from "./utils";
+import type { Capitalize, ParamsConfig, QueryParamConfig } from "../types.utils";
+import { upperFirst } from "../utils";
 
 type QueryParamHookResult<T extends string, O extends string> = {
   [K in O as `is${Capitalize<T>}${Capitalize<K>}`]: boolean;
@@ -16,20 +16,29 @@ type QueryParamHookResult<T extends string, O extends string> = {
 };
 
 function useUrlParams<T extends string, O extends string>(config: QueryParamConfig<T, O>): QueryParamHookResult<T, O> {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const router = useRouter();
 
-  const currentValue = searchParams.get(config.keyName) as O | null;
+  // router.isReady is false on the first render during SSR/hydration.
+  // When not ready, router.query is {}, so we fall back to null.
+  const rawValue = router.isReady ? ((router.query[config.keyName] as string | undefined) ?? null) : null;
+
+  // Validate that the raw value is one of the declared options (guards against manually crafted URLs).
+  const currentValue: O | null = rawValue !== null && config.options.includes(rawValue as O) ? (rawValue as O) : null;
+
+  const navigate = useCallback(
+    (query: Record<string, string | undefined>, paramsConfig: ParamsConfig = { replace: false }) => {
+      const method = paramsConfig.replace ? router.replace : router.push;
+      method({ pathname: router.pathname, query }, undefined, { shallow: true });
+    },
+    [router],
+  );
 
   const setterFunction = useCallback(
     (newValue: O, paramsConfig: ParamsConfig = { replace: false }) => {
-      if (config.options.includes(newValue)) {
-        const params = new URLSearchParams(searchParams.toString());
-        params.set(config.keyName, newValue);
-
-        setSearchParams([...params], paramsConfig);
-      }
+      if (!config.options.includes(newValue)) return;
+      navigate({ ...(router.query as Record<string, string>), [config.keyName]: newValue }, paramsConfig);
     },
-    [config.keyName, config.options, searchParams, setSearchParams],
+    [config.keyName, config.options, router.query, navigate],
   );
 
   const onToggle = useCallback(
@@ -44,7 +53,6 @@ function useUrlParams<T extends string, O extends string>(config: QueryParamConf
 
       if (currentOptionIndex !== -1) {
         const nextIndex = (currentOptionIndex + 1) % config.options.length;
-
         nextOption = config.options[nextIndex];
       } else {
         nextOption = config.options[0];
@@ -57,15 +65,13 @@ function useUrlParams<T extends string, O extends string>(config: QueryParamConf
 
   const clearParam = useCallback(
     (paramsConfig: ParamsConfig = { replace: false }) => {
-      const params = new URLSearchParams(searchParams.toString());
-
-      if (params.has(config.keyName)) {
-        params.delete(config.keyName);
-
-        setSearchParams([...params], paramsConfig);
+      const newQuery = { ...(router.query as Record<string, string>) };
+      if (config.keyName in newQuery) {
+        delete newQuery[config.keyName];
+        navigate(newQuery, paramsConfig);
       }
     },
-    [searchParams, config.keyName, setSearchParams],
+    [router.query, config.keyName, navigate],
   );
 
   const capitalizedOptions = useMemo(() => {
@@ -73,14 +79,13 @@ function useUrlParams<T extends string, O extends string>(config: QueryParamConf
       (acc, option) => {
         const capitalizedOption = upperFirst(option);
         const capitalizedKeyName = upperFirst(config.keyName);
-
         return Object.assign(acc, {
-          [`is${capitalizedKeyName}${capitalizedOption}`]: searchParams.get(config.keyName) === option,
+          [`is${capitalizedKeyName}${capitalizedOption}`]: currentValue === option,
         });
       },
       {} as { [key: string]: boolean },
     );
-  }, [searchParams, config.keyName, config.options]);
+  }, [currentValue, config.keyName, config.options]);
 
   return {
     [config.keyName]: currentValue,
