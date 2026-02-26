@@ -1,7 +1,9 @@
+"use client";
+
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
-import type { Capitalize, ParamsConfig, QueryParamConfig } from "./types.utils";
-import { upperFirst } from "./utils";
+import type { Capitalize, ParamsConfig, QueryParamConfig } from "../types.utils";
+import { upperFirst } from "../utils";
 
 type QueryParamHookResult<T extends string, O extends string> = {
   [K in O as `is${Capitalize<T>}${Capitalize<K>}`]: boolean;
@@ -16,20 +18,34 @@ type QueryParamHookResult<T extends string, O extends string> = {
 };
 
 function useUrlParams<T extends string, O extends string>(config: QueryParamConfig<T, O>): QueryParamHookResult<T, O> {
-  const [searchParams, setSearchParams] = useSearchParams();
+  // useSearchParams() requires a <Suspense> boundary above this component.
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
 
   const currentValue = searchParams.get(config.keyName) as O | null;
+
+  const navigate = useCallback(
+    (params: URLSearchParams, paramsConfig: ParamsConfig = { replace: false }) => {
+      const url = params.size > 0 ? `${pathname}?${params.toString()}` : pathname;
+      if (paramsConfig.replace) {
+        router.replace(url);
+      } else {
+        router.push(url);
+      }
+    },
+    [pathname, router],
+  );
 
   const setterFunction = useCallback(
     (newValue: O, paramsConfig: ParamsConfig = { replace: false }) => {
       if (config.options.includes(newValue)) {
         const params = new URLSearchParams(searchParams.toString());
         params.set(config.keyName, newValue);
-
-        setSearchParams([...params], paramsConfig);
+        navigate(params, paramsConfig);
       }
     },
-    [config.keyName, config.options, searchParams, setSearchParams],
+    [config.keyName, config.options, searchParams, navigate],
   );
 
   const onToggle = useCallback(
@@ -44,7 +60,6 @@ function useUrlParams<T extends string, O extends string>(config: QueryParamConf
 
       if (currentOptionIndex !== -1) {
         const nextIndex = (currentOptionIndex + 1) % config.options.length;
-
         nextOption = config.options[nextIndex];
       } else {
         nextOption = config.options[0];
@@ -58,14 +73,12 @@ function useUrlParams<T extends string, O extends string>(config: QueryParamConf
   const clearParam = useCallback(
     (paramsConfig: ParamsConfig = { replace: false }) => {
       const params = new URLSearchParams(searchParams.toString());
-
       if (params.has(config.keyName)) {
         params.delete(config.keyName);
-
-        setSearchParams([...params], paramsConfig);
+        navigate(params, paramsConfig);
       }
     },
-    [searchParams, config.keyName, setSearchParams],
+    [searchParams, config.keyName, navigate],
   );
 
   const capitalizedOptions = useMemo(() => {
@@ -73,7 +86,6 @@ function useUrlParams<T extends string, O extends string>(config: QueryParamConf
       (acc, option) => {
         const capitalizedOption = upperFirst(option);
         const capitalizedKeyName = upperFirst(config.keyName);
-
         return Object.assign(acc, {
           [`is${capitalizedKeyName}${capitalizedOption}`]: searchParams.get(config.keyName) === option,
         });

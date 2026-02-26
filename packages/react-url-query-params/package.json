@@ -14,6 +14,7 @@
     "@types/react-dom": "^18",
     "@vitest/coverage-v8": "4.0.16",
     "jsdom": "^27.4.0",
+    "next": "^16.1.6",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-router-dom": "^6.30.2",
@@ -23,8 +24,19 @@
   },
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "reqnpm run -w packages/react-url-query-params builduire": "./dist/index.cjs"
+      "require": "./dist/index.cjs"
+    },
+    "./next": {
+      "types": "./dist/next/index.d.ts",
+      "import": "./dist/next/index.js",
+      "require": "./dist/next/index.cjs"
+    },
+    "./next-pages": {
+      "types": "./dist/next-pages/index.d.ts",
+      "import": "./dist/next-pages/index.js",
+      "require": "./dist/next-pages/index.cjs"
     }
   },
   "files": [
@@ -40,16 +52,29 @@
     "query",
     "params",
     "typescript",
-    "react-router-dom"
+    "react-router-dom",
+    "next",
+    "nextjs",
+    "app-router",
+    "pages-router"
   ],
   "license": "MIT",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
   "name": "react-url-query-params",
   "peerDependencies": {
+    "next": ">=13.0.0",
     "react": "^18 || ^19",
     "react-dom": "^18 || ^19",
     "react-router-dom": "^6.4 || ^7"
+  },
+  "peerDependenciesMeta": {
+    "next": {
+      "optional": true
+    },
+    "react-router-dom": {
+      "optional": true
+    }
   },
   "repository": {
     "directory": "packages/react-url-query-params",
@@ -66,5 +91,5 @@
   "sideEffects": false,
   "type": "module",
   "types": "dist/index.d.ts",
-  "version": "0.4.11"
+  "version": "0.5.0"
 }

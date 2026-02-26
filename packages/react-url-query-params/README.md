@@ -8,7 +8,7 @@
 
 A lightweight React hook library for managing **URL query parameters** with full TypeScript support and auto-generated helper methods.
 
-Built for [`react-router-dom`](https://reactrouter.com/) (v6+) with **type-safe keys**, **option validation**, and **handy helper flags**.
+Works with **`react-router-dom`** (v6+), **Next.js App Router**, and **Next.js Pages Router** — with **type-safe keys**, **option validation**, and **handy helper flags**.
 
 The library provides two hooks:
 - **`useUrlParams`** - Manage a single query parameter
@@ -21,8 +21,8 @@ The library provides two hooks:
 - **Type-safe** query parameter keys and values
 - **Auto-generated helpers**: `set<Key>`, `toggle<Key>`, `is<Key><Option>`, `clear<Key>`
 - **Toggle mode** for 2-option parameters
-- Works seamlessly with `react-router-dom`’s `useSearchParams`
-- Zero dependencies (except React & react-router-dom)
+- Works with `react-router-dom`, Next.js App Router, and Next.js Pages Router
+- Zero dependencies (except React & your router)
 
 ---
 
@@ -35,7 +35,152 @@ or
 ```bash
 yarn add react-url-query-params
 ```
-## Usage
+
+---
+
+## Router Support
+
+| Import path | Router | When to use |
+|---|---|---|
+| `react-url-query-params` | `react-router-dom` v6+ | CRA, Vite, Remix |
+| `react-url-query-params/next` | Next.js App Router (`next/navigation`) | Next.js 13+ with `app/` directory |
+| `react-url-query-params/next-pages` | Next.js Pages Router (`next/router`) | Next.js with `pages/` directory |
+
+All three exports provide the same `useUrlParams` and `useBatchUrlParams` API.
+
+---
+
+## Next.js — App Router
+
+### Important: Suspense Boundary Required
+
+Components using hooks from `react-url-query-params/next` call `useSearchParams()` from `next/navigation` internally. Next.js requires these to be wrapped in a `<Suspense>` boundary:
+
+```tsx
+import { Suspense } from ‘react’;
+import MyComponent from ‘./MyComponent’;
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <MyComponent />
+    </Suspense>
+  );
+}
+```
+
+### Single Parameter: `useUrlParams`
+
+```tsx
+‘use client’;
+
+import { useUrlParams } from ‘react-url-query-params/next’;
+
+export default function MyComponent() {
+  const { view, setView, toggleView, clearView, isViewGrid, isViewTable } = useUrlParams({
+    keyName: ‘view’,
+    options: [‘grid’, ‘table’] as const,
+  });
+
+  return (
+    <div>
+      <p>Current view: {view}</p>
+      <button onClick={() => setView(‘grid’)}>Grid</button>
+      <button onClick={() => setView(‘table’)}>Table</button>
+      <button onClick={() => toggleView()}>Toggle</button>
+      <button onClick={() => clearView()}>Clear</button>
+      {/* Replace history entry instead of adding a new one */}
+      <button onClick={() => setView(‘grid’, { replace: true })}>Grid (No History)</button>
+      {isViewGrid && <div>Grid mode enabled</div>}
+      {isViewTable && <div>Table mode enabled</div>}
+    </div>
+  );
+}
+```
+
+### Multiple Parameters: `useBatchUrlParams`
+
+```tsx
+‘use client’;
+
+import { useBatchUrlParams } from ‘react-url-query-params/next’;
+
+export default function FilterPanel() {
+  const { set, clearParams, isFilterActive, isSortDesc } = useBatchUrlParams({
+    filter: [‘active’, ‘inactive’] as const,
+    sort: [‘asc’, ‘desc’] as const,
+  });
+
+  return (
+    <div>
+      <button onClick={() => set({ filter: ‘active’, sort: ‘asc’ })}>Active + Asc</button>
+      <button onClick={() => set({ sort: ‘desc’ }, { replace: true })}>Desc (No History)</button>
+      <button onClick={() => clearParams()}>Clear all</button>
+      {isFilterActive && <span>Showing active</span>}
+      {isSortDesc && <span>Sorted descending</span>}
+    </div>
+  );
+}
+```
+
+---
+
+## Next.js — Pages Router
+
+### Important: Params Are Null on First Render
+
+In the Pages Router, `router.isReady` is `false` on the first render during SSR/hydration. During this render all hook values return `null` and all boolean flags return `false`. The component re-renders automatically once the router is ready with real URL values.
+
+### Single Parameter: `useUrlParams`
+
+```tsx
+import { useUrlParams } from ‘react-url-query-params/next-pages’;
+
+export default function MyComponent() {
+  const { view, setView, toggleView, clearView, isViewGrid, isViewTable } = useUrlParams({
+    keyName: ‘view’,
+    options: [‘grid’, ‘table’] as const,
+  });
+
+  return (
+    <div>
+      <p>Current view: {view ?? ‘loading...’}</p>
+      <button onClick={() => setView(‘grid’)}>Grid</button>
+      <button onClick={() => setView(‘table’)}>Table</button>
+      <button onClick={() => toggleView()}>Toggle</button>
+      <button onClick={() => clearView()}>Clear</button>
+      {isViewGrid && <div>Grid mode enabled</div>}
+      {isViewTable && <div>Table mode enabled</div>}
+    </div>
+  );
+}
+```
+
+### Multiple Parameters: `useBatchUrlParams`
+
+```tsx
+import { useBatchUrlParams } from ‘react-url-query-params/next-pages’;
+
+export default function FilterPanel() {
+  const { set, clearParams, isFilterActive, isSortDesc } = useBatchUrlParams({
+    filter: [‘active’, ‘inactive’] as const,
+    sort: [‘asc’, ‘desc’] as const,
+  });
+
+  return (
+    <div>
+      <button onClick={() => set({ filter: ‘active’ })}>Active</button>
+      <button onClick={() => set({ sort: ‘desc’ }, { replace: true })}>Desc (No History)</button>
+      <button onClick={() => clearParams()}>Clear all</button>
+      {isFilterActive && <span>Showing active</span>}
+    </div>
+  );
+}
+```
+
+---
+
+## Usage (react-router-dom)
 
 ![Demo of react-url-query-params](./docs/demo.gif)
 
