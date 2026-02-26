@@ -2,8 +2,6 @@ import { WEB_WORKER_NAME } from "./contants";
 import type { JobId, ToWorkerMessage } from "./types";
 import { workerCode } from "./workerCode";
 
-const pending = new Map<JobId, { resolve: (value: unknown) => void; reject: (reason?: ErrorEvent) => void }>();
-
 function createWorkerBlobUrl(): string {
   const blob = new Blob([workerCode], { type: "application/javascript" });
   return URL.createObjectURL(blob);
@@ -12,6 +10,7 @@ function createWorkerBlobUrl(): string {
 class WorkerManager {
   #worker: Worker | null;
   #blobUrl: string | null;
+  #pending = new Map<JobId, { resolve: (value: unknown) => void; reject: (reason?: ErrorEvent) => void }>();
 
   constructor() {
     this.#blobUrl = createWorkerBlobUrl();
@@ -30,13 +29,13 @@ class WorkerManager {
   #listenerRegistry() {
     this.#worker?.addEventListener("message", (event) => {
       const { id, result, error } = event.data;
-      const entity = pending.get(id);
+      const entity = this.#pending.get(id);
 
       if (!entity) {
         return;
       }
 
-      pending.delete(id);
+      this.#pending.delete(id);
 
       if (error) {
         entity.reject(error);
@@ -46,11 +45,11 @@ class WorkerManager {
     });
 
     this.#worker?.addEventListener("error", (event) => {
-      for (const [, { reject }] of pending) {
+      for (const [, { reject }] of this.#pending) {
         reject(event);
       }
 
-      pending.clear();
+      this.#pending.clear();
     });
   }
 
@@ -58,7 +57,7 @@ class WorkerManager {
     const id = payload.id ?? Math.random().toString(36).substr(2);
 
     const p = new Promise((resolve, reject) => {
-      pending.set(id, { reject, resolve });
+      this.#pending.set(id, { reject, resolve });
     });
 
     this.#worker?.postMessage(payload);

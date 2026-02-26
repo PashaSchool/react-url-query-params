@@ -84,10 +84,10 @@ function makeFormatters(locale = "en-US", timeZone = "UTC", currency = "USD") {
   };
 }
 
-function getFormatter(col: Column, value: unknown) {
-  const formatters = makeFormatters();
-  const availableFormatters = Object.keys(formatters);
+const formatters = makeFormatters();
+const availableFormatters = Object.keys(formatters);
 
+function getFormatter(col: Column, value: unknown) {
   if ("formatType" in col && availableFormatters.includes(col.formatType as string)) {
     const enhance = formatters[col.formatType as keyof typeof formatters];
 

@@ -3,13 +3,8 @@ import type { ExportParams, ExportResponse, ExportStrategy, JobId } from "../typ
 import WorkerManager from "../WorkerManager";
 
 class FsAccessExportStrategy implements ExportStrategy {
-  private workerManager: WorkerManager;
-
-  constructor() {
-    this.workerManager = WorkerManager.initialise();
-  }
-
   async export<T>(params: ExportParams<T>): Promise<ExportResponse> {
+    const workerManager = WorkerManager.initialise();
     const _suggestedName = params?.fileName || "export";
 
     const fileHandle = await window.showSaveFilePicker({
@@ -46,7 +41,7 @@ class FsAccessExportStrategy implements ExportStrategy {
               }),
             );
 
-            await this.workerManager.triggerWorker({
+            await workerManager.triggerWorker({
               id: iterator,
               type: "completed",
             });
@@ -57,7 +52,7 @@ class FsAccessExportStrategy implements ExportStrategy {
             return;
           }
 
-          const csvChunks = await this.workerManager.triggerWorker({
+          const csvChunks = await workerManager.triggerWorker({
             columns: params.columns,
             data: safeRows as Record<string, unknown>[],
             id: iterator,
@@ -83,7 +78,7 @@ class FsAccessExportStrategy implements ExportStrategy {
               }),
             );
 
-            await this.workerManager.triggerWorker({
+            await workerManager.triggerWorker({
               id: iterator,
               type: "completed",
             });
@@ -113,7 +108,7 @@ class FsAccessExportStrategy implements ExportStrategy {
       console.error("Export failed:", err);
       throw err;
     } finally {
-      this.workerManager.terminate();
+      workerManager.terminate();
     }
 
     return {

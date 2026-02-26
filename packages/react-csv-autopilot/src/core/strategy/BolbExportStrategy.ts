@@ -3,13 +3,8 @@ import type { ExportParams, ExportResponse, ExportStrategy, JobId } from "../typ
 import WorkerManager from "../WorkerManager";
 
 class BolbExportStrategy implements ExportStrategy {
-  private workerManager: WorkerManager;
-
-  constructor() {
-    this.workerManager = WorkerManager.initialise();
-  }
-
   async export<T>(params: ExportParams<T>): Promise<ExportResponse> {
+    const workerManager = WorkerManager.initialise();
     const suggestedName = params.fileName ?? "export";
     const filename = suggestedName.endsWith(".csv") ? suggestedName : `${suggestedName}.csv`;
 
@@ -43,7 +38,7 @@ class BolbExportStrategy implements ExportStrategy {
             }),
           );
 
-          await this.workerManager.triggerWorker({
+          await workerManager.triggerWorker({
             id: iterator,
             type: "completed",
           });
@@ -51,7 +46,7 @@ class BolbExportStrategy implements ExportStrategy {
           break;
         }
 
-        const csvChunk = (await this.workerManager.triggerWorker({
+        const csvChunk = (await workerManager.triggerWorker({
           columns: params.columns,
           data: safeRows as Record<string, unknown>[],
           id: iterator,
@@ -77,7 +72,7 @@ class BolbExportStrategy implements ExportStrategy {
             }),
           );
 
-          await this.workerManager.triggerWorker({
+          await workerManager.triggerWorker({
             id: iterator,
             type: "completed",
           });
@@ -104,7 +99,7 @@ class BolbExportStrategy implements ExportStrategy {
       throw error;
     } finally {
       messaging.close();
-      this.workerManager.terminate();
+      workerManager.terminate();
     }
   }
 
